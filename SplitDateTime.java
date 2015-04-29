@@ -38,30 +38,28 @@ public class SplitDateTime {
             String minute = s.substring(hourIndex + 1, minuteIndex);
             String second = s.substring(minuteIndex + 1, secondIndex);
 
-            String date = year + month + day;
-            String time = hour + minute + second;
+            String date = year + "-" + month+ "-" + day;
+            String time = hour + ":" + minute + ":" + second;
 
-            cell.setCellValue(date);
+            cell.setCellValue(date + " " + time);
 
-            HSSFCell newCell = row.createCell(row.getLastCellNum());
-            newCell.setCellValue(time);
             workbook.write(new FileOutputStream(input));
 
 
         }
     }
 
-    public void CreateNewsList(String input, String output, String tweetAccount) throws IOException {
+    public void CreateNewsList(String input, String tweetAccount) throws IOException {
         POIFSFileSystem in = new POIFSFileSystem(new FileInputStream(input));
         HSSFWorkbook workbook1 = new HSSFWorkbook(in);
         HSSFWorkbook workbook2 = new HSSFWorkbook();
 
         HSSFSheet sheet1 = workbook1.getSheetAt(0);
-        HSSFSheet sheet2 = workbook2.createSheet("Sheet1");
+        HSSFSheet sheet2 = workbook2.createSheet("NewsList");
 
         int rownum = 0;
 
-        for(int i = 1; i <= sheet1.getLastRowNum(); i ++) {
+        for(int i = 0; i <= sheet1.getLastRowNum(); i ++) {
             HSSFRow row1 = sheet1.getRow(i);
             HSSFRow row2;
             HSSFCell cell = row1.getCell(1);
@@ -81,23 +79,40 @@ public class SplitDateTime {
             }
 
         }
-        workbook2.write(new FileOutputStream(output));
+
+        workbook2.write(new FileOutputStream(input.substring(0, input.lastIndexOf("/")) + "/NewsList_" + tweetAccount + ".xls"));
     }
 
-    public void ExtractObjectiveTwitter(String input, String newsFile, String output, String tweetAccount) throws IOException {
+    public void ExtractRetweets(String input, String newsFile) throws IOException {
         POIFSFileSystem in = new POIFSFileSystem(new FileInputStream(input));
         POIFSFileSystem news = new POIFSFileSystem(new FileInputStream(newsFile));
         HSSFWorkbook workbook1 = new HSSFWorkbook(in);
         HSSFWorkbook workbookNews = new HSSFWorkbook(news);
-        HSSFWorkbook workbook2 = new HSSFWorkbook();
 
         HSSFSheet sheet1 = workbook1.getSheetAt(0);
-        HSSFSheet sheetNews = workbook1.getSheetAt(0);
-        HSSFSheet sheet2 = workbook2.createSheet("Sheet1");
+        HSSFSheet sheetNews = workbookNews.getSheetAt(0);
 
-        int rownum = 0;
 
         for(int k = 0; k <= sheetNews.getLastRowNum(); k ++) {
+            HSSFSheet sheet2 = workbookNews.createSheet(String.valueOf(k));
+            HSSFRow rowNews = sheetNews.getRow(k);
+            HSSFCell cellNewsBody = rowNews.getCell(2);
+            String newsContent = cellNewsBody.getStringCellValue();
+
+            int writtenRows = 1;
+
+            HSSFRow head = sheet2.createRow(0);
+	        HSSFCell date = head.createCell(0);
+	        HSSFCell address = head.createCell(1);
+	        HSSFCell body = head.createCell(2);
+	        HSSFCell platform = head.createCell(3);
+	        HSSFCell site = head.createCell(4);
+
+	        date.setCellValue("date");
+	        address.setCellValue("address");
+	        body.setCellValue("body");
+	        platform.setCellValue("platform");
+	        site.setCellValue("site");
             for (int i = 1; i <= sheet1.getLastRowNum(); i++) {
                 HSSFRow row1 = sheet1.getRow(i);
                 HSSFRow row2;
@@ -105,8 +120,8 @@ public class SplitDateTime {
 
                 String s = cell.getStringCellValue();
 
-                if (s.contains(tmp)) {
-                    row2 = sheet2.createRow(rownum++);
+                if (s.contains(newsContent)) {
+                    row2 = sheet2.createRow(writtenRows ++);
                     for (int j = 0; j < row1.getLastCellNum(); j++) {
                         HSSFCell cell1 = row1.getCell(j);
                         String cell1Value = cell1.getStringCellValue();
@@ -119,7 +134,7 @@ public class SplitDateTime {
                 }
             }
         }
-        workbook2.write(new FileOutputStream(output));
+        workbookNews.write(new FileOutputStream(newsFile));
 
     }
 }
